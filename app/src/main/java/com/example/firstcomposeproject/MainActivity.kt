@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.example.firstcomposeproject.ui.theme.FirstComposeProjectTheme
 import com.example.firstcomposeproject.ui.theme.MainScreen
