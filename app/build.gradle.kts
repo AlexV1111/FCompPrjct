@@ -77,9 +77,18 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version")
 
-    val lifecycle_version = "2.9.1"
+    val lifecycle_version = "2.9.4"
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:${lifecycle_version}")
+
+//    Navigation with Compose
+    val nav_version = "2.9.5"
+    implementation("androidx.navigation:navigation-compose:$nav_version")
+
+    implementation("com.google.code.gson:gson:2.11.0")
+
+
 
 }

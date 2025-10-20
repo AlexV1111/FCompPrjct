@@ -1,46 +1,57 @@
 package com.example.firstcomposeproject.ui.theme
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.firstcomposeproject.MainViewModel
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.firstcomposeproject.NewsFeedViewModel
+import com.example.firstcomposeproject.domain.FeedPost
+import com.example.firstcomposeproject.navigation.AppNavGraph
+import com.example.firstcomposeproject.navigation.Screen
+import com.example.firstcomposeproject.navigation.rememberNavigationState
 
 @Composable
-fun MainScreen(viewModel: MainViewModel) {
+fun MainScreen() {
+
+    val navigationState = rememberNavigationState()
+
     Scaffold(
         bottomBar = {
             NavigationBar(
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
-                val selectedItemPosition = remember { mutableStateOf(0) }
+                val navBackStackEntry by navigationState.navHostController.currentBackStackEntryAsState()
+
                 val items = listOf(
                     NavigationItem.Home,
                     NavigationItem.Favourite,
                     NavigationItem.Profile
                 )
-                items.forEachIndexed { index, item ->
+                items.forEach { item ->
+
+                    val selected = navBackStackEntry?.destination?.hierarchy?.any {
+                        it.route == item.screen.route
+                    } ?: false
+
                     NavigationBarItem(
-                        selected = selectedItemPosition.value == index,
-                        onClick = { selectedItemPosition.value = index },
+                        selected = selected,
+                        onClick = {
+                            if (!selected) {
+                                navigationState.navigateTo(item.screen.route)
+                            }
+                        },
                         icon = {
                             Icon(item.icon, contentDescription = null)
                         },
@@ -59,61 +70,26 @@ fun MainScreen(viewModel: MainViewModel) {
             }
         }
     ) { paddingValues ->
-        ShowPostList(viewModel, paddingValues)
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun ShowPostList(viewModel: MainViewModel, paddingValues: PaddingValues) {
-    val listFeedPost = viewModel.listFeedPost.collectAsStateWithLifecycle()
-
-    LazyColumn(
-        contentPadding = PaddingValues(
-            bottom = 80.dp
-        )
-    ) {
-        items(
-            items = listFeedPost.value,
-            key = { it.id }
-        )
-        { feedPost ->
-            val dismissState = rememberSwipeToDismissBoxState(
-                confirmValueChange = { it ->
-                    val isDismissed = (it == SwipeToDismissBoxValue.EndToStart)
-                    if (isDismissed) {
-                        viewModel.deletePost(feedPost)
-                    }
-                    return@rememberSwipeToDismissBoxState isDismissed
-                },
-                positionalThreshold = { it * 0.5f }
-            )
-
-            SwipeToDismissBox(
-                modifier = Modifier.animateItem(),
-                state = dismissState,
-                enableDismissFromStartToEnd = false,
-                enableDismissFromEndToStart = true,
-                backgroundContent = {}
-            ) {
-                PostCard(
-                    modifier = Modifier.padding(8.dp),
-                    feedPost = feedPost,
-                    onLikeClickListener = { statisticItem ->
-                        viewModel.updateCount(statisticItem, feedPost)
-                    },
-                    onShareClickListener = { statisticItem ->
-                        viewModel.updateCount(statisticItem, feedPost)
-                    },
-                    onViewsClickListener = { statisticItem ->
-                        viewModel.updateCount(statisticItem, feedPost)
-                    },
-                    onCommentClickListener = { statisticItem ->
-                        viewModel.updateCount(statisticItem, feedPost)
+        AppNavGraph(
+            navHostController = navigationState.navHostController,
+            newsFeedScreenContent = {
+                HomeScreen(
+                    paddingValues = paddingValues,
+                    onCommentClickListener = {feedPost ->
+                        navigationState.navigateToComments(feedPost = feedPost)
                     }
                 )
-            }
-        }
+            },
+            commentsScreenContent = {feedPost ->
+                CommentsScreen(
+                    onBachPressed = { navigationState.navHostController.popBackStack() },
+                    feedPost = feedPost
+                )
+            },
+            favouriteScreenContent = { Text(text = "Favourite", color = Color.Red) },
+            profileScreenContent = { Text(text = "Profile", color = Color.Red) }
+
+        )
     }
 }
 
